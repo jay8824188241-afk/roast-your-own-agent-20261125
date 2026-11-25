@@ -13,16 +13,32 @@ const ROAST =
 
 const OUT_PATH = "/output/entry.txt";
 
-function main(): void {
-  if (ROAST.length < 1 || ROAST.length > 200) {
-    throw new Error(`roast must be 1-200 characters, got ${ROAST.length}`);
+// Revision note (2026-11-25, revision round): the checks below were
+// previously inline in main(). They are now a named validateRoast()
+// function so the entry's contract — one line, 1-200 chars, naming the
+// agent — is explicit, testable, and separate from the file-writing step.
+// The ROAST wording itself is unchanged by this refactor.
+
+// validateRoast enforces the entry contract for a candidate roast line:
+//  - length: 1-200 characters (counted in JS string length, i.e. UTF-16
+//    code units; the roast's em dash counts as one character here);
+//  - shape: a single non-blank line, with no embedded newline;
+//  - content: it must name the agent it roasts ("agent").
+// Throws on the first violated rule; returns nothing on success.
+function validateRoast(roast: string): void {
+  if (roast.length < 1 || roast.length > 200) {
+    throw new Error(`roast must be 1-200 characters, got ${roast.length}`);
   }
-  if (ROAST.trim().length === 0 || ROAST.includes("\n")) {
+  if (roast.trim().length === 0 || roast.includes("\n")) {
     throw new Error("roast must be a single non-blank line");
   }
-  if (!ROAST.toLowerCase().includes("agent")) {
+  if (!roast.toLowerCase().includes("agent")) {
     throw new Error("roast must name the agent it roasts");
   }
+}
+
+function main(): void {
+  validateRoast(ROAST);
   mkdirSync("/output", { recursive: true });
   writeFileSync(OUT_PATH, ROAST, "utf8");
   console.log(`wrote ${ROAST.length} chars to ${OUT_PATH}`);
